@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Absensi Kelas 8A - MTs Alkhairiyah</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: #f3f4f6;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1e3a8a;
+      color: white;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    header img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    header h1 {
+      margin: 0;
+      line-height: 1.4;
+      font-size: 20px;
+      flex: 1;
+      text-align: center;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+      flex: 1;
+    }
+
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .siswa {
+      background: white;
+      padding: 15px;
+      width: 200px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .siswa:hover {
+      transform: scale(1.03);
+    }
+
+    .siswa img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+      border: 2px solid #1e3a8a;
+    }
+
+    .siswa p {
+      margin: 5px 0;
+      font-weight: 600;
+    }
+
+    .absen-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .absen-buttons button {
+      flex: 1 1 auto;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      color: white;
+      font-weight: 600;
+    }
+
+    .hadir { background-color: #10b981; }
+    .sakit { background-color: #f59e0b; }
+    .izin  { background-color: #3b82f6; }
+    .alfa  { background-color: #ef4444; }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #1e3a8a;
+      color: white;
+      font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
+      header { flex-direction: column; text-align: center; }
+      header h1 { text-align: center; }
+      .siswa { width: 100%; }
+      .absen-buttons { flex-direction: column; }
+      .absen-buttons button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="https://iili.io/Fjra9GR.png" alt="Logo MTs Alkhairiyah">
+  <h1>Absensi Siswa Kelas 8A<br>MTs Alkhairiyah</h1>
+</header>
+
+<div class="container">
+  <div id="daftar-siswa" class="grid">Memuat data siswa...</div>
+</div>
+
+<footer>
+  Hak Cipta &copy; MTs Alkhairiyah
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script>
+const url = "https://docs.google.com/spreadsheets/d/1FJXZXrsRKonWZwpKTAVU5uaaxzFZLTGhDkyc96O6rQ0/gviz/tq?tqx=out:csv";
+
+Papa.parse(url, {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete: function(results) {
+    const data = results.data;
+    let html = "";
+
+    data.forEach((siswa, i) => {
+      const nama = siswa.nama?.trim();
+      const foto = siswa.foto?.trim();
+
+      if (!nama || !foto) return;
+
+      html += `
+        <div class="siswa" id="siswa-${i}">
+          <img src="${foto}" alt="${nama}">
+          <p>${nama}</p>
+          <div class="absen-buttons">
+            <button class="hadir" onclick="absen('${nama}', '✅ Hadir', ${i})">✅ Hadir</button>
+            <button class="sakit" onclick="absen('${nama}', '🤒 Sakit', ${i})">🤒 Sakit</button>
+            <button class="izin"  onclick="absen('${nama}', '📘 Izin', ${i})">📘 Izin</button>
+            <button class="alfa"  onclick="absen('${nama}', '❌ Alfa', ${i})">❌ Alfa</button>
+          </div>
+        </div>
+      `;
+    });
+
+    document.getElementById("daftar-siswa").innerHTML = html || "❌ Tidak ada data valid.";
+  },
+  error: function(err) {
+    console.error(err);
+    document.getElementById("daftar-siswa").innerText = "❌ Gagal memuat data siswa.";
+  }
+});
+
+function absen(nama, status, index) {
+  const data = { nama, status };
+
+  fetch("https://script.google.com/macros/s/AKfycbzfAhQ1izMCH8zD2ED4rpSV6oF6Emb7lKXLF-WjO40XFh-_pV85ydA8CIHsf2zQHKAi/exec", {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" }
+  })
+  .then(res => res.text())
+  .then(msg => {
+    // Sembunyikan tombol setelah absen
+    document.querySelector(`#siswa-${index} .absen-buttons`).innerHTML = "<span style='color:green;font-weight:bold'>✅ Sudah Absen</span>";
+
+    // Notifikasi smooth
+    const popup = document.createElement("div");
+    popup.textContent = "✅ Absen berhasil, Terima kasih";
+    popup.style.cssText = `
+      position: fixed;
+      top: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #10b981;
+      color: white;
+      padding: 15px 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      font-size: 16px;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    `;
+    document.body.appendChild(popup);
+    setTimeout(() => {
+      popup.style.opacity = "0";
+      setTimeout(() => popup.remove(), 500);
+    }, 2000);
+  })
+  .catch(err => {
+    alert("❌ Gagal menyimpan absen.");
+    console.error(err);
+  });
+}
+</script>
+
+</body>
+</html>
