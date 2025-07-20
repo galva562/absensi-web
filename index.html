@@ -184,10 +184,12 @@ function absen(nama, status, index) {
   const data = { nama, status };
 
   fetch("https://script.google.com/macros/s/AKfycbzfAhQ1izMCH8zD2ED4rpSV6oF6Emb7lKXLF-WjO40XFh-_pV85ydA8CIHsf2zQHKAi/exec", {
-    method: "POST",
-    body: JSON.stringify(data),
-    headers: { "Content-Type": "application/json" }
-  })
+  method: "POST",
+  headers: {
+    "Content-Type": "application/x-www-form-urlencoded"
+  },
+  body: `nama=${encodeURIComponent(nama)}&status=${encodeURIComponent(status)}`
+})
   .then(res => res.text())
   .then(msg => {
     // Sembunyikan tombol setelah absen
